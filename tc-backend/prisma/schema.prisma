@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email    String @unique
+  password String
+  role     String // 'manager' or 'user'
+
+  firstname String
+  lastname  String
+
+  groupId Int? // Nullable for users not yet in a group
+  group   Group? @relation("GroupMembers", fields: [groupId], references: [id]) // Users in a group
+  tasks   Task[] @relation("UserTasks") // Tasks assigned to this user
+  manages Group? @relation("GroupManager") // Group managed by this user (one-to-one)
+  Task    Task[]
+}
+
+model Group {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name      String @unique
+  managerId Int    @unique // Added @unique to ensure managerId is unique
+  manager   User   @relation("GroupManager", fields: [managerId], references: [id]) // Renamed relation
+
+  members User[] @relation("GroupMembers") // Users in this group
+  tasks   Task[] // Tasks belonging to this group
+}
+
+model Task {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title       String
+  description String
+  priority    String
+  dueDate     DateTime
+
+  groupId Int
+  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade) // Cascade delete when Group is deleted
+
+  userId        Int? // Optional field for assigned user
+  user          User?  @relation(fields: [userId], references: [id])
+  assignedUsers User[] @relation("UserTasks") // Users assigned to this task (many-to-many)
+}
