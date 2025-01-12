@@ -26,7 +26,10 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
+  
+  const managerSeeder = app.get(ManagerSeeder);
+  await managerSeeder.seedManagers();
+  
   await app.listen(3000);[]
 }
 
